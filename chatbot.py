@@ -1,4 +1,5 @@
 import streamlit as st
+import re  # Import the regular expression library
 import openai
 import os
 from dotenv import load_dotenv
@@ -13,6 +14,15 @@ st.sidebar.title("Configuration")
 
 def model_callback():
     st.session_state["model"] = st.session_state["model_selected"]
+    
+def format_equations(text):
+    # Regular expression pattern to match equations
+    equation_pattern = r'\$\$(.*?)\$\$'
+    
+    # Replace equations with LaTeX formatting
+    formatted_text = re.sub(equation_pattern, lambda match: st.latex(match.group(1)), text)
+    
+    return formatted_text
 
 
 if "model" not in st.session_state:
@@ -148,6 +158,37 @@ if user_prompt := st.chat_input("Your prompt"):
             message_placeholder.markdown(full_response + "▌")
         message_placeholder.markdown(full_response)
 
+        message_placeholder.markdown(full_response)
+
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
+    
+    # Generate responses
+with st.chat_message("assistant"):
+    message_placeholder = st.empty()
+    full_response = ""
+
+    for response in openai.ChatCompletion.create(
+        model=st.session_state.model,
+        messages=[
+            {"role": m["role"], "content": m["content"]}
+            for m in st.session_state.messages
+        ],
+        stream=True,
+    ):
+        full_response += response.choices[0].delta.get("content", "")
+        
+        # Check if the current bot role is "Science Bot"
+        if st.session_state["bot_role"] == "Science Bot":
+            formatted_response = format_equations(full_response)
+            message_placeholder.markdown(formatted_response + "▌")
+        else:
+            message_placeholder.markdown(full_response + "▌")
+
+    # Check if the current bot role is "Science Bot"
+    if st.session_state["bot_role"] == "Science Bot":
+        formatted_response = format_equations(full_response)
+        message_placeholder.markdown(formatted_response)
+    else:
         message_placeholder.markdown(full_response)
 
     st.session_state.messages.append({"role": "assistant", "content": full_response})
