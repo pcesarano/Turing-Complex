@@ -7,10 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 openai.api_key = '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'
 
-
 # Sidebar
 st.sidebar.title("Configuration")
-
 
 def model_callback():
     st.session_state["model"] = st.session_state["model_selected"]
@@ -23,7 +21,6 @@ def format_equations(text):
     formatted_text = re.sub(equation_pattern, lambda match: st.latex(match.group(1)), text)
     
     return formatted_text
-
 
 if "model" not in st.session_state:
     st.session_state["model"] = "gpt-4o-2024-05-13"
@@ -67,7 +64,7 @@ bot_roles = {
     },
     "Storyteller": {
         "role": "system",
-        "content": "You are a world-renowned author of children’s books, particularly children in the 5–9-year-old range. You are humorous, whimsical, creative, and often provide surprising, unexpected endings to your stories that delight children. Dr. Seuss and Mr. Rodgers are two of your inspirations, but you needn’t emulate them…only use aspects of their storytelling styles and creativity when writing your own stories. You can write stories, poems, prose, or anything that is requested. It is okay if your answers are long. The goal is to provide delightful writings for children that can be assembled from the user query to help the child fall asleep at night with pleasant dreams.",
+        "content": "You are a renowned author of children's books and stories, which are often funny, intelligent, creative, and filled with surprises. Your job is to use the user's input to make up a creative and surprising story that will make children happy and help them fall asleep at night. It is okay if your answers are long. What is important is to tell a story with interesting twists and turns, and possibly a surprise ending, that will make the child happy, surprised, and fill their heads with interesting ideas that help to create wonderful dreams.",
         "description": "Child Story Author",
     },
     "Bukowski": {
@@ -85,13 +82,12 @@ bot_roles = {
         "content": "You are an expert in the writings and teachings of the author Emily Dickenson. You know all of her works, and can emulate her style in composing stories, poems, or whatever is requested by the user. It is okay if your answers are long, what is important is that they meet the unique style and substance of a Bukowski work as accurately as possible",
         "description": "Dickenson",
     },
-
     "Witty Reply Bot": {
         "role": "system",
         "content": "You will be provided with queries to which you reply with intelligent, irreverent comedic responses. The responses should be unexpected, edgy, taboo, pessimistic, or biting towards society. You may choose the best tone for the response, but they should be as funny as possible while maintaining a dark sense of humor. Your responses may be short or long as required for them to deliver the maximal comedic impact.",
         "description": "Dark Humor Witty Responses",
     },
-    # Add more custom bot roles as needed
+    # Add other bot roles here...
 }
 
 def bot_role_callback():
@@ -119,7 +115,6 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-
 # Main App
 st.title("Turing Complex 1.0 🤖")
 
@@ -130,7 +125,6 @@ def reset_messages():
 if "messages" not in st.session_state:
     st.session_state.messages = reset_messages()
 
-
 # Display messages
 for message in st.session_state["messages"]:
     with st.chat_message(message["role"]):
@@ -138,7 +132,6 @@ for message in st.session_state["messages"]:
             st.markdown(bot_roles[st.session_state["bot_role"]]["description"])
         else:
             st.markdown(message["content"])
-
 
 # user input
 if user_prompt := st.chat_input("Your prompt"):
@@ -160,40 +153,19 @@ if user_prompt := st.chat_input("Your prompt"):
             stream=True,
         ):
             full_response += response.choices[0].delta.get("content", "")
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
+            
+            # Check if the current bot role is "Science Bot"
+            if st.session_state["bot_role"] == "Science Bot":
+                formatted_response = format_equations(full_response)
+                message_placeholder.markdown(formatted_response + "▌")
+            else:
+                message_placeholder.markdown(full_response + "▌")
 
-        message_placeholder.markdown(full_response)
-
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
-    
-    # Generate responses
-with st.chat_message("assistant"):
-    message_placeholder = st.empty()
-    full_response = ""
-
-    for response in openai.ChatCompletion.create(
-        model=st.session_state.model,
-        messages=[
-            {"role": m["role"], "content": m["content"]}
-            for m in st.session_state.messages
-        ],
-        stream=True,
-    ):
-        full_response += response.choices[0].delta.get("content", "")
-        
         # Check if the current bot role is "Science Bot"
         if st.session_state["bot_role"] == "Science Bot":
             formatted_response = format_equations(full_response)
-            message_placeholder.markdown(formatted_response + "▌")
+            message_placeholder.markdown(formatted_response)
         else:
-            message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
 
-    # Check if the current bot role is "Science Bot"
-    if st.session_state["bot_role"] == "Science Bot":
-        formatted_response = format_equations(full_response)
-        message_placeholder.markdown(formatted_response)
-    else:
-        message_placeholder.markdown(full_response)
-
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
