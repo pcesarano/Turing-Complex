@@ -12,10 +12,10 @@ st.sidebar.title("Configuration")
 
 def model_callback():
     st.session_state["model"] = st.session_state["model_selected"]
-    
+
 def format_equations(text):
     # Regular expression pattern to match equations
-    equation_pattern = r'\$\$(.*?)\$\$'
+    equation_pattern = r'\$(.*?)\$'
     
     # Replace equations with LaTeX formatting
     formatted_text = re.sub(equation_pattern, lambda match: st.latex(match.group(1)), text)
@@ -35,7 +35,7 @@ st.session_state.model = st.sidebar.radio(
 
 st.sidebar.markdown(
     f"""
-    ### ℹ️ <span style="white-space: pre-line; font-family: Arial; font-size: 14px;">Current model: {st.session_state.model}.</span>
+    ### ℹ️ Current model: {st.session_state.model}.
     """,
     unsafe_allow_html=True,
 )
@@ -106,11 +106,10 @@ st.session_state.bot_role = st.sidebar.radio(
 )
 
 description = bot_roles[st.session_state["bot_role"]]["description"]
-
 st.sidebar.markdown(
     f"""
     ### ℹ️ Description
-    <span style="white-space: pre-line; font-family: Arial; font-size: 14px;">{description}</span>
+    {description}
     """,
     unsafe_allow_html=True,
 )
@@ -133,7 +132,7 @@ for message in st.session_state["messages"]:
         else:
             st.markdown(message["content"])
 
-# user input
+# User input
 if user_prompt := st.chat_input("Your prompt"):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
@@ -143,7 +142,6 @@ if user_prompt := st.chat_input("Your prompt"):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
-
         for response in openai.ChatCompletion.create(
             model=st.session_state.model,
             messages=[
@@ -153,19 +151,10 @@ if user_prompt := st.chat_input("Your prompt"):
             stream=True,
         ):
             full_response += response.choices[0].delta.get("content", "")
-            
-            # Check if the current bot role is "Science Bot"
-            if st.session_state["bot_role"] == "Science Bot":
-                formatted_response = format_equations(full_response)
-                message_placeholder.markdown(formatted_response + "▌")
-            else:
-                message_placeholder.markdown(full_response + "▌")
-
-        # Check if the current bot role is "Science Bot"
-        if st.session_state["bot_role"] == "Science Bot":
             formatted_response = format_equations(full_response)
-            message_placeholder.markdown(formatted_response)
-        else:
-            message_placeholder.markdown(full_response)
+            message_placeholder.markdown(formatted_response + "▌")
+
+        formatted_response = format_equations(full_response)
+        message_placeholder.markdown(formatted_response)
 
         st.session_state.messages.append({"role": "assistant", "content": full_response})
