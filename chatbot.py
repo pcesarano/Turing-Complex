@@ -2,10 +2,13 @@ import streamlit as st
 import re  # Import the regular expression library
 import openai
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 load_dotenv()
-openai.api_key = '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'
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+
+print(os.getenv("OPENAI_API_KEY"))
+
 
 # Sidebar
 st.sidebar.title("Configuration")
