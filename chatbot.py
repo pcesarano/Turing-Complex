@@ -27,7 +27,7 @@ if "model" not in st.session_state:
 
 st.session_state.model = st.sidebar.radio(
     "Select OpenAI Model",
-    ("gpt-4o-2024-05-13", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"),
+    ("gpt-4o-2024-05-13", "gpt-4-turbo-2024-04-09", "gpt-3.5-turbo-0125"),
     index=0 if st.session_state["model"] == "gpt-4o-2024-05-13" else 1,
     on_change=model_callback,
     key="model_selected",
