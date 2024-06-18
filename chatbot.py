@@ -115,7 +115,7 @@ st.sidebar.markdown(
 )
 
 # Main App
-st.title("Turing Complex 2.0 🤖")
+st.title("Turing Complex 2.1 🦋")
 
 def reset_messages():
     return [bot_roles[st.session_state["bot_role"]]]
