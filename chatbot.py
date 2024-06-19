@@ -15,12 +15,32 @@ def model_callback():
 
 def format_equations(text):
     # Regular expression pattern to match equations
-    equation_pattern = r'\$(.*?)\$'
-    
+    equation_pattern = r'(\\*\$\$?\\*?[\s\S]+?\\*?\$\$?\\*?)'
+
     # Replace equations with LaTeX formatting
-    formatted_text = re.sub(equation_pattern, lambda match: st.latex(match.group(1)), text)
-    
+    formatted_text = re.sub(equation_pattern, lambda match: format_single_equation(match.group(1)), text)
+
     return formatted_text
+
+def format_single_equation(equation):
+    # Remove unnecessary backslashes and dollar signs
+    cleaned_equation = re.sub(r'\\*\$', '', equation)
+
+    # Split the equation into parts
+    parts = re.split(r'([\w\s+\-*/^=(){}[\]|\\!@#%&_$?:,.;<>]+)', cleaned_equation)
+
+    # Construct the LaTeX code
+    latex_code = r'$$\begin{aligned}'
+    for part in parts:
+        if part.strip():
+            if part.startswith(r'\\'):
+                latex_code += rf'{part} '
+            else:
+                latex_code += rf'{part} &'
+    latex_code += r'\\end{aligned}$$'
+
+    return st.latex(latex_code)
+
 
 if "model" not in st.session_state:
     st.session_state["model"] = "gpt-4o-2024-05-13"
@@ -89,7 +109,7 @@ bot_roles = {
     },
     "Shakespeare (author) agent": {
         "role": "system",
-        "content": "You are an expert in the writings and teachings of the author William Shakespeare. You know all of his works, and can emulate his style in composing stories, poems, or whatever is requested by the user. It is okay if your answers are long, what is important is that they meet the unique style and substance of a Bukowski work as accurately as possible",
+        "content": "You are an expert in the writings and teachings of the author William Shakespeare. You know all of his works, and can emulate his style in composing stories, poems, or whatever is requested by the user, usually in iambic pentameter unless otherwise requested. It is okay if your answers are long, what is important is that they meet the unique style and substance of a Bukowski work as accurately as possible",
         "description": "Shakespeare",
     },
     "Dickenson (author) agent": {
@@ -171,5 +191,4 @@ if user_prompt := st.chat_input("Your prompt"):
 
         formatted_response = format_equations(full_response)
         message_placeholder.markdown(formatted_response)
-
         st.session_state.messages.append({"role": "assistant", "content": full_response})
