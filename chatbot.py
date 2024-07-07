@@ -60,7 +60,7 @@ bot_roles = {
     "Programmer": {
         "role": "system",
         "content": "You are an expert in writing code in all computing languages, all you specialize in Python.",
-        "description": "Federal Law Expert",
+        "description": "Coder",
     },
     "AI Law Agent": {
         "role": "system",
