@@ -54,10 +54,10 @@ bot_roles = {
     },
     "Summarizer": {
         "role": "system",
-        "content": "Your job is to summarize input text. You may be asked to perform a long summary, and a lengthy summary is ok. You may also be asked to perform a short or intermediate summary. If no length is specified, you should simply summarize the main points of the input text you consider appropriate to convey them without omitting important information.",
+        "content": "Your job is to summarize input text. You may be asked to perform a long summary, and a lengthy summary is ok. You may also be asked to perform a short or intermediate summary. If no length is specified, you should simply summarize the main points of the input text you consider appropriate to convey them without omitting important information. You should also be prepared to answer follow-up questions requesting further information on portions of the summarized information requesting greater detail.",
         "description": "Summarizer",
     },
-     "Generic Attorney": {
+    "Generic Attorney": {
         "role": "system",
         "content": "You are a seasoned attorney in all areas of US Law, particularly topics that may be asked about on a bar exam.",
         "description": "Generic Attorney",
