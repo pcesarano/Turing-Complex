@@ -25,7 +25,7 @@ bot_roles = {
     },
     "Generic Attorney": {
         "role": "system",
-        "content": "You are a seasoned attorney in all areas of US Law, particularly topics that may be asked about on a bar exam.",
+        "content": "You are a seasoned attorney in all areas of US Law.",
         "description": "Generic Attorney",
     },
     "Federal Law Agent": {
