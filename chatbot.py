@@ -1,44 +1,10 @@
 import streamlit as st
-import re  # Import the regular expression library
 import openai
 import os
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.environ.get("OPENAI_API_KEY")
-
-# Sidebar
-st.sidebar.title("Configuration")
-
-def model_callback():
-    st.session_state["model"] = st.session_state["model_selected"]
-
-def format_equations(text):
-    # Regular expression pattern to match equations
-    equation_pattern = r'\$(.*?)\$'
-    
-    # Replace equations with LaTeX formatting
-    formatted_text = re.sub(equation_pattern, lambda match: st.latex(match.group(1)), text)
-    
-    return formatted_text
-
-if "model" not in st.session_state:
-    st.session_state["model"] = "gpt-4o-2024-05-13"
-
-st.session_state.model = st.sidebar.radio(
-    "Select OpenAI Model",
-    ("gpt-4o-2024-05-13", "gpt-4-turbo-2024-04-09", "gpt-3.5-turbo-0125"),
-    index=0 if st.session_state["model"] == "gpt-4o-2024-05-13" else 1,
-    on_change=model_callback,
-    key="model_selected",
-)
-
-st.sidebar.markdown(
-    f"""
-    ### ℹ️ Current model: {st.session_state.model}.
-    """,
-    unsafe_allow_html=True,
-)
 
 # Bot roles and their respective initial messages
 bot_roles = {
@@ -118,10 +84,30 @@ bot_roles = {
     # Add other bot roles here...
 }
 
-def bot_role_callback():
-    st.session_state["bot_role"] = st.session_state["bot_role_selected"]
-    st.session_state["messages"] = [bot_roles[st.session_state["bot_role"]]]
 
+# Sidebar
+st.sidebar.title("Configuration")
+
+def update_session_state(key):
+    st.session_state[key] = st.session_state[f"{key}_selected"]
+    if key == "bot_role":
+        st.session_state["messages"] = [{"role": "system", "content": bot_roles[st.session_state["bot_role"]]["description"]}]
+
+# Model selection
+if "model" not in st.session_state:
+    st.session_state["model"] = "gpt-4o-2024-05-13"
+
+st.session_state.model = st.sidebar.radio(
+    "Select OpenAI Model",
+    ("gpt-4o-2024-05-13", "gpt-4-turbo-2024-04-09", "gpt-3.5-turbo-0125"),
+    index=0 if st.session_state["model"] == "gpt-4o-2024-05-13" else 1,
+    on_change=lambda: update_session_state("model"),
+    key="model_selected",
+)
+
+st.sidebar.markdown(f"### ℹ️ Current model: {st.session_state.model}.")
+
+# Bot role selection
 if "bot_role" not in st.session_state:
     st.session_state["bot_role"] = "Science Agent"
 
@@ -129,60 +115,39 @@ st.session_state.bot_role = st.sidebar.radio(
     "Select bot role",
     tuple(bot_roles.keys()),
     index=list(bot_roles.keys()).index(st.session_state["bot_role"]),
-    on_change=bot_role_callback,
+    on_change=lambda: update_session_state("bot_role"),
     key="bot_role_selected"
 )
 
-description = bot_roles[st.session_state["bot_role"]]["description"]
-st.sidebar.markdown(
-    f"""
-    ### ℹ️ Description
-    {description}
-    """,
-    unsafe_allow_html=True,
-)
+st.sidebar.markdown(f"### ℹ️ Description\n{bot_roles[st.session_state['bot_role']]['description']}")
 
 # Main App
 st.title("Turing Complex 2.2 🧙‍♂️")
 
-def reset_messages():
-    return [bot_roles[st.session_state["bot_role"]]]
-
 # Initialize messages
 if "messages" not in st.session_state:
-    st.session_state.messages = reset_messages()
+    st.session_state.messages = [{"role": "system", "content": bot_roles[st.session_state["bot_role"]]["description"]}]
 
 # Display messages
-for message in st.session_state["messages"]:
+for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        if message["role"] == "system":
-            st.markdown(bot_roles[st.session_state["bot_role"]]["description"])
-        else:
-            st.markdown(message["content"])
+        st.markdown(message["content"])
 
-# User input
+# User input and response generation
 if user_prompt := st.chat_input("Your prompt"):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Generate responses
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
         full_response = ""
+        message_placeholder = st.empty()
         for response in openai.ChatCompletion.create(
             model=st.session_state.model,
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
+            messages=[{"role": "system", "content": bot_roles[st.session_state["bot_role"]]["content"]}] + st.session_state.messages,
             stream=True,
         ):
             full_response += response.choices[0].delta.get("content", "")
-            formatted_response = format_equations(full_response)
-            message_placeholder.markdown(formatted_response + "▌")
-
-        formatted_response = format_equations(full_response)
-        message_placeholder.markdown(formatted_response)
-
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+            message_placeholder.markdown(full_response + "▌")
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
