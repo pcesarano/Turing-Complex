@@ -105,7 +105,7 @@ st.session_state.model = st.sidebar.radio(
     key="model_selected",
 )
 
-st.sidebar.markdown(f"### ℹ️ Current model: {st.session_state.model}.")
+st.sidebar.markdown(f"### Current model: {st.session_state.model}.")
 
 # Bot role selection
 if "bot_role" not in st.session_state:
@@ -119,10 +119,10 @@ st.session_state.bot_role = st.sidebar.radio(
     key="bot_role_selected"
 )
 
-st.sidebar.markdown(f"### ℹ️ Description\n{bot_roles[st.session_state['bot_role']]['description']}")
+st.sidebar.markdown(f"### Description\n{bot_roles[st.session_state['bot_role']]['description']}")
 
 # Main App
-st.title("Turing Complex 2.2 🧙‍♂️")
+st.title("Turing Complex 2.3 🧙‍♂️")
 
 # Initialize messages
 if "messages" not in st.session_state:
